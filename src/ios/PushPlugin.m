@@ -155,9 +155,6 @@
         [results setValue:[[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleDisplayName"] forKey:@"appName"];
         [results setValue:[[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"] forKey:@"appVersion"];
 
-        // Check what Notifications the user has turned on.  We registered for all three, but they may have manually disabled some or all of them.
-        NSUInteger rntypes = [[UIApplication sharedApplication] enabledRemoteNotificationTypes];
-
         // Set the defaults to disabled unless we find otherwise...
         NSString *pushBadge = @"disabled";
         NSString *pushAlert = @"disabled";
@@ -167,15 +164,33 @@
         // one is actually disabled. So we are literally checking to see if rnTypes matches what is turned on, instead of by number. The "tricky" part is that the
         // single notification types will only match if they are the ONLY one enabled.  Likewise, when we are checking for a pair of notifications, it will only be
         // true if those two notifications are on.  This is why the code is written this way
-        if(rntypes & UIRemoteNotificationTypeBadge){
-            pushBadge = @"enabled";
-        }
-        if(rntypes & UIRemoteNotificationTypeAlert) {
-            pushAlert = @"enabled";
-        }
-        if(rntypes & UIRemoteNotificationTypeSound) {
-            pushSound = @"enabled";
-        }
+        #if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_8_0
+    
+            if([[UIApplication sharedApplication] isRegisteredForRemoteNotifications]){
+                NSUInteger rntypes = [[[UIApplication sharedApplication] currentUserNotificationSettings] types];
+                if(rntypes & UIUserNotificationTypeBadge){
+                    pushBadge = @"enabled";
+                }
+                if(rntypes & UIUserNotificationTypeAlert) {
+                    pushAlert = @"enabled";
+                }
+                if(rntypes & UIUserNotificationTypeSound) {
+                    pushSound = @"enabled";
+                }
+            }
+    
+        #else
+            NSUInteger rntypes = [[UIApplication sharedApplication] enabledRemoteNotificationTypes];
+            if(rntypes & UIRemoteNotificationTypeBadge){
+                pushBadge = @"enabled";
+            }
+            if(rntypes & UIRemoteNotificationTypeAlert) {
+                pushAlert = @"enabled";
+            }
+            if(rntypes & UIRemoteNotificationTypeSound) {
+                pushSound = @"enabled";
+            }
+        #endif
 
         [results setValue:pushBadge forKey:@"pushBadge"];
         [results setValue:pushAlert forKey:@"pushAlert"];
